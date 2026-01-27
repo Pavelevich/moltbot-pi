@@ -112,15 +112,15 @@
 ### ✅ Included
 
 - 🤖 **AI Chat** - DeepSeek integration (GPT-compatible)
-- 📱 **Telegram Bot** - Full bot API support
-- 📊 **System Monitoring** - RAM, CPU temp, uptime, disk, network
+- 📁 **File Vault** - Encrypted file storage on Pi
+- ⏰ **Reminders** - Natural language scheduled messages
+- 🏠 **Smart Home** - TP-Link Tapo device control
+- 📊 **System Monitoring** - RAM, CPU temp, uptime, disk
 - 🔧 **Remote Shell** - Run bash commands via Telegram
-- 📁 **File Operations** - Read/write files remotely
 - ⚡ **GPIO Control** - Turn pins on/off, read state
 - 🔄 **System Control** - Reboot/shutdown via Telegram
 - 🖥️ **LCD Display** - Waveshare 1.44" HAT support
 - 🔐 **Admin Protection** - Restrict dangerous commands
-- ⚡ **Lazy Loading** - Load modules on demand
 
 </td>
 <td width="50%">
@@ -291,6 +291,15 @@ DEEPSEEK_API_KEY=your_deepseek_api_key
 # Get your ID by sending /whoami to the bot
 TELEGRAM_ADMIN_ID=your_telegram_user_id
 
+# Vault Password (Optional)
+# Password for encrypting stored files
+VAULT_PASSWORD=your_secret_password
+
+# Tapo Smart Home (Optional)
+# TP-Link Tapo account for /home commands
+TAPO_EMAIL=your_tapo_email@example.com
+TAPO_PASSWORD=your_tapo_password
+
 # Profile (Optional - defaults to raspberry-pi)
 MOLTBOT_PROFILE=raspberry-pi
 ```
@@ -357,6 +366,37 @@ tail -f bot.log
 | `/whoami` | Get your Telegram user ID |
 | `[any text]` | Chat with DeepSeek AI |
 
+#### File Vault (Encrypted Storage)
+
+| Command | Description |
+|---------|-------------|
+| `/vault` | List stored files |
+| `/vault get <name>` | Retrieve a file |
+| `/vault delete <name>` | Delete a file |
+| `[send any file]` | Store file in encrypted vault |
+
+#### Reminders
+
+| Command | Description |
+|---------|-------------|
+| `/remind in 30 minutes <msg>` | Remind in X minutes |
+| `/remind at 14:00 <msg>` | Remind at specific time |
+| `/remind tomorrow at 9:00 <msg>` | Remind tomorrow |
+| `/reminders` | List active reminders |
+| `/remind cancel <id>` | Cancel a reminder |
+
+#### Smart Home (Tapo)
+
+| Command | Description |
+|---------|-------------|
+| `/home` | Status of all devices |
+| `/home devices` | List all devices |
+| `/home on <device>` | Turn device on |
+| `/home off <device>` | Turn device off |
+| `/home toggle <device>` | Toggle device |
+| `/home temp` | Temperature sensors |
+| `/home sensors` | All sensor readings |
+
 #### Admin Commands (Requires TELEGRAM_ADMIN_ID)
 
 | Command | Description |
@@ -378,18 +418,28 @@ Bot: 🤖 Moltbot Pi - Raspberry Pi AI Bot
 You: /status
 Bot: 📊 Moltbot Pi Status
      🖥️ Raspberry Pi Zero 2W
-     ⏱️ Bot uptime: 2h 15m
-     💾 RAM used: 87 MB
-     🌡️ CPU temp: 45.2°C
-     🤖 AI: DeepSeek ✓
+     ⏱️ Uptime: 2h 15m
+     💾 RAM: 87 MB
+     🌡️ CPU: 45.2°C
+     📁 Vault: 3 files
+     ⏰ Reminders: 2 active
+     🏠 Tapo: Connected
 
-You: /bash ls -la
-Bot: $ ls -la
-     total 236
-     drwxrwxr-x 6 pi pi 4096 ...
+You: /remind in 30 minutes check laundry
+Bot: ✅ Reminder set for 3:45 PM
+     "check laundry"
 
-You: /gpio 17 on
-Bot: ⚡ GPIO 17 → HIGH
+You: /home on living_room
+Bot: 💡 OK: living_room turned ON
+
+You: /home temp
+Bot: 🌡️ Temperature
+     bedroom_sensor: 22.5°C, 45% humidity
+     kitchen_sensor: 24.1°C, 38% humidity
+
+You: [sends a PDF file]
+Bot: ✅ Stored "document.pdf" in vault
+     Retrieve with: /vault get document.pdf
 
 You: Explain Docker in simple terms
 Bot: Docker is like a shipping container for software...
@@ -519,6 +569,7 @@ moltbot-pi/
 │       └── lazy-llama.ts      # Local LLM (disabled)
 ├── scripts/
 │   ├── display_icon.py        # LCD display control
+│   ├── tapo_cli.py            # Tapo smart home CLI
 │   ├── install-raspberry-pi.sh
 │   └── build-raspberry-pi.sh
 ├── config/
