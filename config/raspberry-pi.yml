@@ -1,0 +1,45 @@
+# Moltbot Lite - Raspberry Pi Configuration
+# Copy to ~/.moltbot/config.yml
+
+profile: raspberry-pi
+
+gateway:
+  mode: local
+  port: 18789
+  bind: 0.0.0.0
+
+# Channels (only Telegram enabled for Pi)
+channels:
+  telegram:
+    enabled: true
+  whatsapp:
+    enabled: false
+  discord:
+    enabled: false
+  slack:
+    enabled: false
+
+# AI Configuration
+ai:
+  provider: deepseek
+  model: deepseek-chat
+  baseURL: https://api.deepseek.com/v1
+
+# Tools (limited for Pi)
+tools:
+  bash:
+    enabled: true
+  files:
+    enabled: true
+  web_scrape:
+    enabled: false
+  screenshot:
+    enabled: false
+
+# Features disabled for memory savings
+browser:
+  enabled: false
+
+media:
+  processing: false
+  vision: api

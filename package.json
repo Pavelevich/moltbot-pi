@@ -1,0 +1,80 @@
+{
+  "name": "moltbot-lite",
+  "version": "2026.1.27-lite",
+  "description": "Lightweight Moltbot for Raspberry Pi and resource-constrained devices",
+  "type": "module",
+  "main": "dist/entry.js",
+  "bin": {
+    "moltbot": "dist/entry.js"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "node dist/entry.js",
+    "gateway": "node dist/entry.js gateway run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@clack/prompts": "^0.11.0",
+    "@sinclair/typebox": "0.34.47",
+    "body-parser": "^2.2.2",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "croner": "^9.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "grammy": "^1.39.3",
+    "hono": "4.11.4",
+    "json5": "^2.2.3",
+    "markdown-it": "^14.1.0",
+    "proper-lockfile": "^4.1.2",
+    "tslog": "^4.10.2",
+    "undici": "^7.19.0",
+    "ws": "^8.19.0",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.5",
+    "playwright-core": "1.58.0",
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "pdfjs-dist": "^5.4.530",
+    "node-llama-cpp": "^3.5.0",
+    "@napi-rs/canvas": "^0.1.68"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "@types/express": "^5.0.0",
+    "@types/ws": "^8.18.0"
+  },
+  "keywords": [
+    "moltbot",
+    "raspberry-pi",
+    "lite",
+    "ai-agent",
+    "telegram-bot",
+    "claude",
+    "anthropic"
+  ],
+  "author": "Moltbot Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moltbot/moltbot.git"
+  },
+  "files": [
+    "dist/",
+    "config/",
+    "README.md"
+  ],
+  "os": [
+    "linux",
+    "darwin"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ]
+}
