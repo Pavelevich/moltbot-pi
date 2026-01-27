@@ -113,12 +113,14 @@
 
 - 🤖 **AI Chat** - DeepSeek integration (GPT-compatible)
 - 📱 **Telegram Bot** - Full bot API support
-- 📊 **System Monitoring** - RAM, uptime, status
+- 📊 **System Monitoring** - RAM, CPU temp, uptime, disk, network
+- 🔧 **Remote Shell** - Run bash commands via Telegram
+- 📁 **File Operations** - Read/write files remotely
+- ⚡ **GPIO Control** - Turn pins on/off, read state
+- 🔄 **System Control** - Reboot/shutdown via Telegram
 - 🖥️ **LCD Display** - Waveshare 1.44" HAT support
+- 🔐 **Admin Protection** - Restrict dangerous commands
 - ⚡ **Lazy Loading** - Load modules on demand
-- 🎛️ **Feature Flags** - Enable/disable features
-- 🔧 **Bash Tools** - System command execution
-- 📁 **File Operations** - Read/write capabilities
 
 </td>
 <td width="50%">
@@ -284,6 +286,11 @@ TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 # Get from: https://platform.deepseek.com
 DEEPSEEK_API_KEY=your_deepseek_api_key
 
+# Telegram Admin ID (Optional)
+# Your Telegram user ID for admin commands
+# Get your ID by sending /whoami to the bot
+TELEGRAM_ADMIN_ID=your_telegram_user_id
+
 # Profile (Optional - defaults to raspberry-pi)
 MOLTBOT_PROFILE=raspberry-pi
 ```
@@ -336,29 +343,67 @@ tail -f bot.log
 
 ### Telegram Commands
 
-| Command | Description | Example Response |
-|---------|-------------|------------------|
-| `/start` | Initialize bot & show welcome | Welcome message with instructions |
-| `/status` | System status & metrics | RAM, uptime, AI status |
-| `[any text]` | Chat with AI | AI-generated response |
+#### Public Commands (Everyone)
+
+| Command | Description |
+|---------|-------------|
+| `/start` | Welcome message & command list |
+| `/help` | Show all available commands |
+| `/status` | System status (RAM, CPU temp, uptime) |
+| `/temp` | CPU temperature |
+| `/disk` | Disk space usage |
+| `/network` | Network info (IP, hostname, WiFi) |
+| `/uptime` | System uptime |
+| `/whoami` | Get your Telegram user ID |
+| `[any text]` | Chat with DeepSeek AI |
+
+#### Admin Commands (Requires TELEGRAM_ADMIN_ID)
+
+| Command | Description |
+|---------|-------------|
+| `/bash <cmd>` | Run shell command on the Pi |
+| `/read <path>` | Read file contents |
+| `/write <path> <text>` | Write text to file |
+| `/gpio <pin> <on\|off\|read>` | Control GPIO pins |
+| `/reboot` | Reboot the Raspberry Pi |
+| `/shutdown` | Shutdown the Raspberry Pi |
 
 ### Example Conversation
 
 ```
 You: /start
-Bot: 🤖 Moltbot Lite on Raspberry Pi!
-     Send me a message and I'll respond with DeepSeek AI.
+Bot: 🤖 Moltbot Pi - Raspberry Pi AI Bot
+     Send me any message to chat with AI.
 
 You: /status
-Bot: 📊 Moltbot Status
+Bot: 📊 Moltbot Pi Status
      🖥️ Raspberry Pi Zero 2W
-     ⏱️ Uptime: 2h 15m
-     💾 RAM: 87 MB
+     ⏱️ Bot uptime: 2h 15m
+     💾 RAM used: 87 MB
+     🌡️ CPU temp: 45.2°C
      🤖 AI: DeepSeek ✓
+
+You: /bash ls -la
+Bot: $ ls -la
+     total 236
+     drwxrwxr-x 6 pi pi 4096 ...
+
+You: /gpio 17 on
+Bot: ⚡ GPIO 17 → HIGH
 
 You: Explain Docker in simple terms
 Bot: Docker is like a shipping container for software...
 ```
+
+### Setting Up Admin Access
+
+1. Start the bot and send `/whoami`
+2. Copy your Telegram user ID from the response
+3. Add it to your `.env` file:
+   ```
+   TELEGRAM_ADMIN_ID=123456789
+   ```
+4. Restart the bot
 
 ---
 
