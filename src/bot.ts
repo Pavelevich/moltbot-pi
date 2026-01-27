@@ -17,8 +17,11 @@ import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { fileURLToPath } from 'url';
 
 const execAsync = promisify(exec);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Environment variables
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
