@@ -1,309 +1,445 @@
-# Moltbot Lite for Raspberry Pi
+<p align="center">
+  <img src="assets/Raspclaut.png" alt="Moltbot Pi" width="180"/>
+</p>
+
+<h1 align="center">Moltbot Pi</h1>
 
 <p align="center">
-  <img src="assets/Raspclaut.png" alt="Moltbot Lite" width="200"/>
+  <strong>A lightweight, memory-efficient AI-powered Telegram bot designed for Raspberry Pi Zero 2W</strong>
 </p>
 
 <p align="center">
-  <strong>A lightweight AI-powered Telegram bot optimized for Raspberry Pi Zero 2W</strong>
+  <a href="#-features">Features</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-hardware">Hardware</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-usage">Usage</a> •
+  <a href="#-api-reference">API</a>
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#hardware-requirements">Hardware</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#lcd-display">LCD Display</a>
+  <img src="https://img.shields.io/badge/Platform-Raspberry%20Pi-C51A4A?style=for-the-badge&logo=raspberry-pi" alt="Raspberry Pi"/>
+  <img src="https://img.shields.io/badge/Node.js-22+-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"/>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/RAM-85MB-green?style=flat-square" alt="RAM Usage"/>
+  <img src="https://img.shields.io/badge/Dependencies-34MB-blue?style=flat-square" alt="Dependencies"/>
+  <img src="https://img.shields.io/badge/AI-DeepSeek-purple?style=flat-square" alt="AI Provider"/>
 </p>
 
 ---
 
-## Overview
+## 📋 Table of Contents
 
-Moltbot Lite is a stripped-down, memory-efficient version of [Moltbot](https://github.com/moltbot/moltbot) designed to run on resource-constrained devices like the **Raspberry Pi Zero 2W** with only **512MB RAM**.
-
-This project enables you to run a fully functional AI-powered Telegram bot on a tiny, low-power device using the **DeepSeek API** (OpenAI-compatible) for affordable AI responses.
-
-### Performance Metrics
-
-| Metric | Moltbot Lite | Original Moltbot |
-|--------|--------------|------------------|
-| RAM (idle) | ~85 MB | ~400 MB |
-| RAM (active) | ~120 MB | ~600 MB |
-| node_modules | 34 MB | ~700 MB |
-| Dependencies | 101 packages | 1000+ packages |
-| Startup time | ~3 seconds | ~10 seconds |
-
----
-
-## Features
-
-### Included
-- Telegram bot with DeepSeek AI integration
-- Chat with AI (questions, writing, coding, translation)
-- System status monitoring via `/status` command
-- LCD display support (Waveshare 1.44" HAT)
-- Lazy-loading architecture for minimal memory usage
-- Feature flags system for customization
-
-### Disabled in Lite Mode (saves memory)
-- Browser automation (Playwright)
-- Image processing (Sharp)
-- WhatsApp Web (Baileys)
-- PDF parsing
-- Local LLM embeddings
+- [Overview](#-overview)
+- [Performance](#-performance)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Hardware Requirements](#-hardware-requirements)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+- [LCD Display Setup](#-lcd-display-setup)
+- [Running as a Service](#-running-as-a-service)
+- [Architecture](#-architecture)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
-## Hardware Requirements
+## 🎯 Overview
 
-### Minimum Setup
-| Component | Model | Notes |
-|-----------|-------|-------|
-| **Board** | Raspberry Pi Zero 2W | 512MB RAM, ARM64 |
-| **Storage** | MicroSD 8GB+ | Class 10 recommended |
-| **Power** | 5V 2.5A adapter | Stable power required |
-| **Network** | WiFi or USB Ethernet | Built-in WiFi on Pi Zero 2W |
+**Moltbot Pi** is a production-ready, lightweight implementation of an AI-powered Telegram bot specifically optimized for resource-constrained devices. Built with a modular architecture and lazy-loading system, it delivers full AI capabilities while consuming minimal system resources.
 
-### Optional: LCD Display
-| Component | Model | Specifications |
-|-----------|-------|----------------|
-| **Display** | Waveshare 1.44" LCD HAT | ST7735S, 128x128 pixels, SPI |
+### Why Moltbot Pi?
 
-#### LCD HAT Pinout (ST7735S)
+| Challenge | Solution |
+|-----------|----------|
+| Limited RAM (512MB) | Lazy-loading architecture, only loads modules when needed |
+| Slow storage (SD Card) | Minimal dependencies (34MB vs 700MB) |
+| Limited CPU | Efficient async operations, no heavy processing |
+| Power constraints | Low idle consumption (~85MB RAM) |
+
+---
+
+## 📊 Performance
+
+<table>
+<tr>
+<td>
+
+### Memory Footprint
+
 ```
-┌─────────────────────────────────┐
-│  Waveshare 1.44" LCD HAT Pins   │
-├─────────────────────────────────┤
-│  RST  → GPIO 27                 │
-│  DC   → GPIO 25                 │
-│  BL   → GPIO 24 (Backlight)     │
-│  CS   → GPIO 8  (SPI CE0)       │
-│  CLK  → GPIO 11 (SPI SCLK)      │
-│  DIN  → GPIO 10 (SPI MOSI)      │
-└─────────────────────────────────┘
+┌────────────────────────────┐
+│     Moltbot Pi: 85 MB      │
+│     ████████░░░░░░░░░░░░   │
+│                            │
+│     Original:  400+ MB     │
+│     ████████████████████   │
+└────────────────────────────┘
 ```
 
-#### Buttons & Joystick (if available on HAT)
-```
-KEY1    → GPIO 21
-KEY2    → GPIO 20
-KEY3    → GPIO 16
-JOY UP  → GPIO 6
-JOY DOWN→ GPIO 19
-JOY LEFT→ GPIO 5
-JOY RIGHT→ GPIO 26
-JOY PRESS→ GPIO 13
+</td>
+<td>
+
+### Comparison
+
+| Metric | Moltbot Pi | Original |
+|--------|------------|----------|
+| RAM (idle) | **85 MB** | 400 MB |
+| RAM (active) | **120 MB** | 600 MB |
+| node_modules | **34 MB** | 700 MB |
+| Packages | **101** | 1000+ |
+| Startup | **~3s** | ~10s |
+
+</td>
+</tr>
+</table>
+
+---
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### ✅ Included
+
+- 🤖 **AI Chat** - DeepSeek integration (GPT-compatible)
+- 📱 **Telegram Bot** - Full bot API support
+- 📊 **System Monitoring** - RAM, uptime, status
+- 🖥️ **LCD Display** - Waveshare 1.44" HAT support
+- ⚡ **Lazy Loading** - Load modules on demand
+- 🎛️ **Feature Flags** - Enable/disable features
+- 🔧 **Bash Tools** - System command execution
+- 📁 **File Operations** - Read/write capabilities
+
+</td>
+<td width="50%">
+
+### ❌ Disabled (Saves Memory)
+
+- 🌐 Browser automation (Playwright)
+- 🖼️ Image processing (Sharp)
+- 📱 WhatsApp Web (Baileys)
+- 📄 PDF parsing (pdfjs)
+- 🧠 Local LLM (llama.cpp)
+- 🎨 Canvas rendering
+
+> These features can be enabled on devices with more RAM by changing the profile.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/Pavelevich/moltbot-pi.git
+cd moltbot-pi
+
+# Install dependencies
+npm install --omit=optional
+
+# Configure environment
+cp .env.example .env
+nano .env  # Add your API keys
+
+# Run the bot
+node --experimental-strip-types src/bot.ts
 ```
 
 ---
 
-## Installation
+## 🔧 Hardware Requirements
+
+### Minimum Configuration
+
+| Component | Specification | Notes |
+|-----------|---------------|-------|
+| **Board** | Raspberry Pi Zero 2W | Quad-core ARM Cortex-A53, 512MB RAM |
+| **Storage** | MicroSD 8GB+ | Class 10 / U1 recommended |
+| **Power** | 5V 2.5A USB | Stable power supply required |
+| **Network** | WiFi 802.11 b/g/n | Built-in on Pi Zero 2W |
+
+### Optional: LCD Display Module
+
+<table>
+<tr>
+<td width="50%">
+
+**Waveshare 1.44" LCD HAT**
+- Controller: ST7735S
+- Resolution: 128 × 128 pixels
+- Interface: SPI
+- Colors: 65K RGB
+
+</td>
+<td width="50%">
+
+**GPIO Pinout**
+```
+RST ──── GPIO 27
+DC  ──── GPIO 25
+BL  ──── GPIO 24
+CS  ──── GPIO 8 (CE0)
+CLK ──── GPIO 11 (SCLK)
+DIN ──── GPIO 10 (MOSI)
+```
+
+</td>
+</tr>
+</table>
+
+### GPIO Reference (Buttons & Joystick)
+
+```
+┌─────────────────────────────────────────┐
+│           Waveshare 1.44" HAT           │
+├─────────────────────────────────────────┤
+│  KEY1 ─── GPIO 21    JOY UP ─── GPIO 6  │
+│  KEY2 ─── GPIO 20    JOY DN ─── GPIO 19 │
+│  KEY3 ─── GPIO 16    JOY LT ─── GPIO 5  │
+│                      JOY RT ─── GPIO 26 │
+│                      JOY OK ─── GPIO 13 │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 📦 Installation
 
 ### Prerequisites
 
-1. **Raspberry Pi OS** (64-bit Lite recommended)
-2. **Node.js 22+**
-3. **API Keys:**
-   - Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
-   - DeepSeek API Key (from [platform.deepseek.com](https://platform.deepseek.com))
+- Raspberry Pi OS (64-bit Lite recommended)
+- Node.js 22 or higher
+- Internet connection
 
-### Quick Install
+### Step 1: Install Node.js 22
 
 ```bash
-# SSH into your Raspberry Pi
-ssh pi@your-pi-ip
+# Update system
+sudo apt update && sudo apt upgrade -y
 
-# Clone the repository
-git clone https://github.com/Pavelevich/moltbot-lite-pi.git
-cd moltbot-lite-pi
-
-# Install Node.js 22 (if not installed)
+# Install Node.js 22
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Install dependencies (lite only, ~34MB)
+# Verify installation
+node --version  # Expected: v22.x.x
+```
+
+### Step 2: Clone & Install
+
+```bash
+# Clone repository
+git clone https://github.com/Pavelevich/moltbot-pi.git
+cd moltbot-pi
+
+# Install dependencies (lightweight)
 npm install --omit=optional --ignore-scripts
 
-# Copy environment template
+# Verify installation
+ls node_modules | wc -l  # Expected: ~100 packages
+du -sh node_modules      # Expected: ~34MB
+```
+
+### Step 3: Configure
+
+```bash
+# Create environment file
 cp .env.example .env
 
-# Edit with your API keys
+# Edit configuration
 nano .env
 ```
 
-### Manual Installation
-
-```bash
-# 1. Update system
-sudo apt update && sudo apt upgrade -y
-
-# 2. Install Node.js 22
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# 3. Verify installation
-node --version  # Should be v22.x.x
-
-# 4. Clone and setup
-git clone https://github.com/Pavelevich/moltbot-lite-pi.git
-cd moltbot-lite-pi
-npm install --omit=optional --ignore-scripts
-
-# 5. Configure environment
-cp .env.example .env
-nano .env  # Add your API keys
-```
-
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
-Create a `.env` file with your API keys:
+Create a `.env` file in the project root:
 
 ```env
-# Telegram Bot Token (from @BotFather)
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+# ═══════════════════════════════════════════════════════════
+# MOLTBOT PI - CONFIGURATION
+# ═══════════════════════════════════════════════════════════
 
-# DeepSeek API Key (from platform.deepseek.com)
-DEEPSEEK_API_KEY=your_deepseek_api_key_here
+# Telegram Bot Token (Required)
+# Get from: https://t.me/BotFather
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 
-# Profile (leave as raspberry-pi for Pi Zero 2W)
+# DeepSeek API Key (Required)
+# Get from: https://platform.deepseek.com
+DEEPSEEK_API_KEY=your_deepseek_api_key
+
+# Profile (Optional - defaults to raspberry-pi)
 MOLTBOT_PROFILE=raspberry-pi
 ```
 
-### Getting API Keys
+### Obtaining API Keys
 
-#### Telegram Bot Token
-1. Open Telegram and search for `@BotFather`
-2. Send `/newbot`
-3. Choose a name (e.g., "My Pi Bot")
-4. Choose a username (e.g., "my_pi_bot")
-5. Copy the token provided
+<details>
+<summary><b>📱 Telegram Bot Token</b></summary>
 
-#### DeepSeek API Key
-1. Go to [platform.deepseek.com](https://platform.deepseek.com)
-2. Create an account
-3. Navigate to API Keys
-4. Create a new API key
-5. Copy the key (starts with `sk-`)
+1. Open Telegram and search for **@BotFather**
+2. Send `/newbot` command
+3. Choose a display name (e.g., "My Pi Assistant")
+4. Choose a username ending in `bot` (e.g., "my_pi_assistant_bot")
+5. Copy the token provided (format: `123456789:ABCdefGHI...`)
+
+</details>
+
+<details>
+<summary><b>🤖 DeepSeek API Key</b></summary>
+
+1. Visit [platform.deepseek.com](https://platform.deepseek.com)
+2. Create an account or sign in
+3. Navigate to **API Keys** section
+4. Click **Create new API key**
+5. Copy the key (format: `sk-...`)
+
+**Pricing:** ~$0.14 per 1M tokens (very affordable)
+
+</details>
 
 ---
 
-## Usage
+## 🎮 Usage
 
 ### Starting the Bot
 
 ```bash
-cd moltbot-lite-pi
-
-# Option 1: Direct run
+# Development mode
 node --experimental-strip-types src/bot.ts
 
-# Option 2: With environment file
+# With environment variables
 source .env && node --experimental-strip-types src/bot.ts
 
-# Option 3: Background process
+# Background process
 nohup node --experimental-strip-types src/bot.ts > bot.log 2>&1 &
+
+# View logs
+tail -f bot.log
 ```
 
 ### Telegram Commands
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Welcome message and instructions |
-| `/status` | Show bot status, RAM usage, uptime |
-| Any text | Chat with DeepSeek AI |
+| Command | Description | Example Response |
+|---------|-------------|------------------|
+| `/start` | Initialize bot & show welcome | Welcome message with instructions |
+| `/status` | System status & metrics | RAM, uptime, AI status |
+| `[any text]` | Chat with AI | AI-generated response |
 
-### Example Interactions
+### Example Conversation
 
 ```
-You: Hello, what can you do?
-Bot: I'm Moltbot, running on a Raspberry Pi! I can help you with...
+You: /start
+Bot: 🤖 Moltbot Lite on Raspberry Pi!
+     Send me a message and I'll respond with DeepSeek AI.
 
 You: /status
-Bot: 📊 Status of Moltbot Lite
+Bot: 📊 Moltbot Status
      🖥️ Raspberry Pi Zero 2W
-     ⏱️ Uptime: 5m 32s
-     💾 RAM: 85 MB
+     ⏱️ Uptime: 2h 15m
+     💾 RAM: 87 MB
      🤖 AI: DeepSeek ✓
 
-You: Write a haiku about robots
-Bot: Silicon dreams wake,
-     Circuits hum with quiet thought,
-     Metal hearts beat on.
+You: Explain Docker in simple terms
+Bot: Docker is like a shipping container for software...
 ```
 
 ---
 
-## LCD Display
+## 🖥️ LCD Display Setup
 
-### Setup
+### Install Dependencies
 
 ```bash
-# Install Python dependencies
+# System packages
 sudo apt-get install -y python3-pip python3-pil python3-numpy
+
+# Python libraries
 pip3 install st7735 spidev RPi.GPIO gpiodevice --break-system-packages
 
-# Enable SPI
+# Enable SPI interface
 sudo raspi-config
-# Navigate to: Interface Options → SPI → Enable
+# → Interface Options → SPI → Enable
 ```
 
-### Display an Image
+### Display Commands
 
 ```bash
-# Display your custom image
+# Show custom image (128x128 recommended)
 python3 scripts/display_icon.py assets/Raspclaut.png
 
-# Display text
-python3 scripts/display_icon.py "HELLO"
+# Show text
+python3 scripts/display_icon.py "ONLINE"
 
-# Default (shows MOLTBOT)
+# Default display (MOLTBOT logo)
 python3 scripts/display_icon.py
 ```
 
-### Customize Display Script
+### Auto-Display on Boot
 
-Edit `scripts/display_icon.py` to customize colors, fonts, or add animations.
+Add to `/etc/rc.local` (before `exit 0`):
+
+```bash
+python3 /home/pi/moltbot-pi/scripts/display_icon.py /home/pi/moltbot-pi/assets/Raspclaut.png &
+```
 
 ---
 
-## Running as a Service
+## 🔄 Running as a Service
 
-### Create systemd Service
+### Create Systemd Service
 
 ```bash
 sudo nano /etc/systemd/system/moltbot.service
 ```
 
-Add the following:
-
 ```ini
 [Unit]
-Description=Moltbot Lite Telegram Bot
-After=network.target
+Description=Moltbot Pi - AI Telegram Bot
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/moltbot-lite-pi
-EnvironmentFile=/home/pi/moltbot-lite-pi/.env
+WorkingDirectory=/home/pi/moltbot-pi
+EnvironmentFile=/home/pi/moltbot-pi/.env
 ExecStart=/usr/bin/node --experimental-strip-types src/bot.ts
 Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-### Enable and Start
+### Service Management
 
 ```bash
+# Reload systemd
 sudo systemctl daemon-reload
+
+# Enable auto-start
 sudo systemctl enable moltbot
+
+# Start service
 sudo systemctl start moltbot
 
 # Check status
@@ -311,146 +447,185 @@ sudo systemctl status moltbot
 
 # View logs
 journalctl -u moltbot -f
+
+# Restart
+sudo systemctl restart moltbot
+
+# Stop
+sudo systemctl stop moltbot
 ```
 
 ---
 
-## Project Structure
+## 🏗️ Architecture
 
 ```
-moltbot-lite-pi/
+moltbot-pi/
 ├── src/
-│   ├── bot.ts              # Main Telegram bot with DeepSeek
+│   ├── bot.ts                 # Main entry point
 │   ├── infra/
-│   │   └── features.ts     # Feature flags system
+│   │   └── features.ts        # Feature flags system
 │   └── compat/
-│       ├── index.ts        # Compatibility layer exports
-│       ├── lazy-playwright.ts
-│       ├── lazy-sharp.ts
-│       ├── lazy-baileys.ts
-│       ├── lazy-pdfjs.ts
-│       └── lazy-llama.ts
+│       ├── index.ts           # Compatibility layer
+│       ├── lazy-playwright.ts # Browser (disabled)
+│       ├── lazy-sharp.ts      # Images (disabled)
+│       ├── lazy-baileys.ts    # WhatsApp (disabled)
+│       ├── lazy-pdfjs.ts      # PDF (disabled)
+│       └── lazy-llama.ts      # Local LLM (disabled)
 ├── scripts/
-│   ├── display_icon.py     # LCD display script
+│   ├── display_icon.py        # LCD display control
 │   ├── install-raspberry-pi.sh
 │   └── build-raspberry-pi.sh
 ├── config/
-│   └── raspberry-pi.yml    # Default Pi configuration
+│   └── raspberry-pi.yml       # Default configuration
 ├── assets/
-│   └── Raspclaut.png       # Project logo
-├── package.json
-├── .env.example
+│   └── Raspclaut.png          # Project logo
+├── .env.example               # Environment template
 ├── .gitignore
+├── package.json
+├── LICENSE
 └── README.md
 ```
 
----
+### Feature Flags System
 
-## Feature Flags
+```typescript
+// Profiles available:
+// - 'default'      → Full features (2GB+ RAM)
+// - 'raspberry-pi' → Minimal (512MB RAM)
+// - 'embedded'     → Ultra-minimal (256MB RAM)
 
-The feature flags system allows you to enable/disable features based on your hardware capabilities.
-
-### Available Profiles
-
-| Profile | RAM Target | Use Case |
-|---------|------------|----------|
-| `default` | 2GB+ | Full-featured (Mac/Linux/Server) |
-| `raspberry-pi` | 512MB | Raspberry Pi Zero 2W |
-| `embedded` | 256MB | Ultra-minimal IoT devices |
-
-### Customizing Features
-
-Edit `src/infra/features.ts` or set environment variables:
-
-```bash
-# Disable browser features
-export MOLTBOT_DISABLE_BROWSER=1
-
-# Enable only specific channels
-export MOLTBOT_CHANNELS=telegram,webchat
+const features = loadFeatures(); // Auto-detects based on RAM
 ```
 
 ---
 
-## Troubleshooting
+## 🔍 Troubleshooting
 
-### Bot won't start
+<details>
+<summary><b>Bot won't start</b></summary>
+
 ```bash
-# Check Node.js version
-node --version  # Must be 22+
+# Check Node.js version (must be 22+)
+node --version
 
-# Check if port is in use
+# Verify environment variables
+cat .env
+
+# Check for port conflicts
 lsof -i :18789
 
-# Check logs
-tail -f bot.log
+# Run with verbose output
+DEBUG=* node --experimental-strip-types src/bot.ts
 ```
 
-### Display not working
+</details>
+
+<details>
+<summary><b>Out of memory errors</b></summary>
+
+```bash
+# Check current memory
+free -m
+
+# Disable unnecessary services
+sudo systemctl disable bluetooth
+sudo systemctl disable avahi-daemon
+
+# Increase swap (temporary)
+sudo dphys-swapfile swapoff
+sudo nano /etc/dphys-swapfile  # Set CONF_SWAPSIZE=1024
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+```
+
+</details>
+
+<details>
+<summary><b>LCD display not working</b></summary>
+
 ```bash
 # Check SPI is enabled
 ls /dev/spi*  # Should show spidev0.0
 
-# Test with simple script
-python3 -c "import st7735; print('OK')"
+# Test Python imports
+python3 -c "import st7735; print('ST7735 OK')"
+python3 -c "import RPi.GPIO; print('GPIO OK')"
+
+# Check wiring and connections
+# Ensure HAT is properly seated on GPIO header
 ```
 
-### Out of memory
-```bash
-# Check memory usage
-free -m
+</details>
 
-# Kill other processes
-sudo systemctl stop bluetooth
-sudo systemctl stop avahi-daemon
-```
+<details>
+<summary><b>Network/WiFi issues</b></summary>
 
-### Network issues
 ```bash
-# Check WiFi
+# Check WiFi status
 iwconfig wlan0
 
 # Restart networking
 sudo systemctl restart networking
+
+# View network logs
+journalctl -u networking -f
+```
+
+</details>
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting a PR.
+
+1. **Fork** the repository
+2. **Create** your feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/moltbot-pi.git
+
+# Install all dependencies (including dev)
+npm install
+
+# Run in development
+npm run dev
 ```
 
 ---
 
-## Contributing
+## 📄 License
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## License
+## 🙏 Acknowledgments
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-- [Moltbot](https://github.com/moltbot/moltbot) - Original project
+- [Moltbot](https://github.com/moltbot/moltbot) - Original project inspiration
 - [DeepSeek](https://deepseek.com) - Affordable AI API
-- [Grammy](https://grammy.dev) - Telegram Bot Framework
-- [Waveshare](https://waveshare.com) - LCD HAT hardware
-
----
-
-## Author
-
-**Pavelevich**
-
-- GitHub: [@Pavelevich](https://github.com/Pavelevich)
+- [Grammy](https://grammy.dev) - Excellent Telegram Bot Framework
+- [Waveshare](https://waveshare.com) - Quality LCD hardware
 
 ---
 
 <p align="center">
-  Made with ❤️ for the Raspberry Pi community
+  <b>Built with ❤️ for the Raspberry Pi community</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Pavelevich/moltbot-pi/issues">Report Bug</a>
+  •
+  <a href="https://github.com/Pavelevich/moltbot-pi/issues">Request Feature</a>
+</p>
+
+<p align="center">
+  <sub>Created by <a href="https://github.com/Pavelevich">Pavelevich</a></sub>
 </p>
