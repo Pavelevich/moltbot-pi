@@ -112,6 +112,8 @@
 ### ✅ Included
 
 - 🤖 **AI Chat** - DeepSeek integration (GPT-compatible)
+- 🧠 **AI Function Calling** - Natural language commands
+- 🛡️ **Security Tools** - Network scanner, honeypot, breach checker
 - 📁 **File Vault** - Encrypted file storage on Pi
 - ⏰ **Reminders** - Natural language scheduled messages
 - 🏠 **Smart Home** - TP-Link Tapo device control
@@ -408,6 +410,48 @@ tail -f bot.log
 | `/reboot` | Reboot the Raspberry Pi |
 | `/shutdown` | Shutdown the Raspberry Pi |
 
+#### Security Tools (Admin Only)
+
+| Command | Description |
+|---------|-------------|
+| `/security` | Overview of all security commands |
+| `/scan` | Scan network for connected devices |
+| `/scan ports <ip>` | Port scan a specific IP |
+| `/alerts` | Check for unknown/suspicious devices |
+| `/honeypot` | Intrusion detection honeypot status |
+| `/honeypot start <ssh\|ftp\|http\|telnet>` | Start a honeypot service |
+| `/honeypot logs` | View intrusion attempts |
+| `/wifi` | WiFi security audit |
+| `/wifi scan` | Scan nearby WiFi networks |
+| `/breach email <email>` | Check email in breach databases |
+| `/breach password <pass>` | Check if password was leaked |
+| `/2fa add <name> <secret>` | Add TOTP 2FA secret |
+| `/2fa get <name>` | Get current 2FA code |
+| `/2fa list` | List all 2FA services |
+| `/dns` | Pi-hole DNS status |
+| `/dns enable` | Enable ad blocking |
+| `/dns disable` | Disable ad blocking |
+| `/vpn` | WireGuard VPN status |
+| `/vpn up` | Connect to VPN |
+| `/vpn down` | Disconnect from VPN |
+
+### AI Natural Language Commands
+
+Instead of using specific commands, you can just ask the AI in plain English:
+
+| Natural Language | What It Does |
+|------------------|--------------|
+| "Scan my network" | Runs network scanner |
+| "Is password123 safe?" | Checks breach database |
+| "Turn on the lights" | Controls Tapo devices |
+| "Start the honeypot" | Starts intrusion detection |
+| "Show security alerts" | Displays honeypot logs |
+| "Get my GitHub 2FA code" | Generates TOTP code |
+| "How's the Pi doing?" | Shows system status |
+| "Check ports on 192.168.1.1" | Runs port scan |
+
+The AI understands context and can execute tools automatically when you ask naturally.
+
 ### Example Conversation
 
 ```
@@ -570,6 +614,7 @@ moltbot-pi/
 ├── scripts/
 │   ├── display_icon.py        # LCD display control
 │   ├── tapo_cli.py            # Tapo smart home CLI
+│   ├── security_tools.py      # Security toolkit (scanner, honeypot, etc.)
 │   ├── install-raspberry-pi.sh
 │   └── build-raspberry-pi.sh
 ├── config/
