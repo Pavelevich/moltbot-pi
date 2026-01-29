@@ -49,7 +49,8 @@ if (!TELEGRAM_TOKEN || !DEEPSEEK_KEY) {
 // Paths
 const VAULT_DIR = path.join(process.env.HOME || '/tmp', '.moltbot-vault');
 const REMINDERS_FILE = path.join(process.env.HOME || '/tmp', '.moltbot-reminders.json');
-const TAPO_CLI = path.join(__dirname, '..', 'scripts', 'tapo_cli.py');
+const TAPO_CLI = path.join(__dirname, 'scripts', 'tapo_cli.py');
+const SECURITY_CLI = path.join(__dirname, 'scripts', 'security_tools.py');
 
 console.log('=== Moltbot Pi ===');
 console.log('Platform: Raspberry Pi');
@@ -269,7 +270,17 @@ Examples:
 /write <path> <text> - Write file
 /gpio <pin> <on|off|read>
 /reboot - Reboot Pi
-/shutdown - Shutdown Pi`;
+/shutdown - Shutdown Pi
+
+🛡️ Security Tools:
+/security - All security commands
+/scan - Network scanner
+/honeypot - Intrusion detection
+/wifi - WiFi security audit
+/breach - Credential leak checker
+/2fa - TOTP authenticator
+/dns - Pi-hole control
+/vpn - WireGuard VPN`;
   }
 
   ctx.reply(helpText);
@@ -693,6 +704,287 @@ bot.command('shutdown', async (ctx) => {
 
   await ctx.reply('⚠️ Shutting down in 5 seconds...');
   setTimeout(() => exec('sudo shutdown -h now'), 5000);
+});
+
+// ==================== SECURITY TOOLS ====================
+
+// /scan - Network scanner
+bot.command('scan', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/scan', '').trim().split(' ');
+  const action = args?.[0];
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'ports' && args?.[1]) {
+    const target = args[1];
+    const ports = args[2] || 'common';
+    const result = await runCommand(`python3 ${SECURITY_CLI} scan ports ${target} ${ports}`, 60000);
+    return ctx.reply(`🔍 Port Scan\n\n${result}`);
+  }
+
+  const result = await runCommand(`python3 ${SECURITY_CLI} scan`, 60000);
+  ctx.reply(`🔍 Network Scan\n\n${result}\n\nCommands:\n/scan - Scan network\n/scan ports <ip> - Scan ports`);
+});
+
+// /alerts - Check for unknown devices
+bot.command('alerts', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  await ctx.replyWithChatAction('typing');
+  const result = await runCommand(`python3 ${SECURITY_CLI} alerts`, 30000);
+  ctx.reply(`🚨 Security Alerts\n\n${result}`);
+});
+
+// /honeypot - Honeypot control
+bot.command('honeypot', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/honeypot', '').trim().split(' ');
+  const action = args?.[0];
+  const service = args?.[1];
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'start' && service) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} honeypot start ${service}`, 30000);
+    return ctx.reply(`🍯 ${result}`);
+  }
+
+  if (action === 'stop' && service) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} honeypot stop ${service}`, 30000);
+    return ctx.reply(`🍯 ${result}`);
+  }
+
+  if (action === 'logs') {
+    const limit = service || '20';
+    const result = await runCommand(`python3 ${SECURITY_CLI} honeypot logs ${limit}`, 30000);
+    return ctx.reply(`🍯 Honeypot Logs\n\n${result}`);
+  }
+
+  if (action === 'clear') {
+    const result = await runCommand(`python3 ${SECURITY_CLI} honeypot clear`, 30000);
+    return ctx.reply(`🍯 ${result}`);
+  }
+
+  const result = await runCommand(`python3 ${SECURITY_CLI} honeypot status`, 30000);
+  ctx.reply(`🍯 Honeypot Status\n\n${result}\n\nCommands:\n/honeypot - Status\n/honeypot start <ssh|ftp|http|telnet>\n/honeypot stop <service>\n/honeypot logs [n]\n/honeypot clear`);
+});
+
+// /wifi - WiFi security audit
+bot.command('wifi', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/wifi', '').trim().split(' ');
+  const action = args?.[0] || 'audit';
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'scan') {
+    const result = await runCommand(`python3 ${SECURITY_CLI} wifi scan`, 30000);
+    return ctx.reply(`📡 WiFi Networks\n\n${result}`);
+  }
+
+  if (action === 'clients') {
+    const result = await runCommand(`python3 ${SECURITY_CLI} wifi clients`, 30000);
+    return ctx.reply(`📡 Network Clients\n\n${result}`);
+  }
+
+  const result = await runCommand(`python3 ${SECURITY_CLI} wifi audit`, 30000);
+  ctx.reply(`📡 WiFi Security Audit\n\n${result}\n\nCommands:\n/wifi - Security audit\n/wifi scan - Nearby networks\n/wifi clients - Connected devices`);
+});
+
+// /breach - Breach checker
+bot.command('breach', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/breach', '').trim().split(' ');
+  const action = args?.[0];
+  const value = args?.slice(1).join(' ');
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'email' && value) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} breach email "${value}"`, 30000);
+    return ctx.reply(`🔓 Breach Check\n\n${result}`);
+  }
+
+  if (action === 'password' && value) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} breach password "${value}"`, 30000);
+    return ctx.reply(`🔑 Password Check\n\n${result}`);
+  }
+
+  if (action === 'monitor' && value) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} breach monitor "${value}"`, 30000);
+    return ctx.reply(`📧 ${result}`);
+  }
+
+  if (action === 'list') {
+    const result = await runCommand(`python3 ${SECURITY_CLI} breach list`, 30000);
+    return ctx.reply(`📧 Monitored Emails\n\n${result}`);
+  }
+
+  ctx.reply(`🔓 Breach Checker
+
+Commands:
+/breach email <email> - Check email breaches
+/breach password <pass> - Check if password leaked
+/breach monitor <email> - Add to monitoring
+/breach list - List monitored emails`);
+});
+
+// /2fa - TOTP Authenticator
+bot.command('2fa', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/2fa', '').trim().split(' ');
+  const action = args?.[0];
+  const name = args?.[1];
+  const secret = args?.slice(2).join(' ');
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'add' && name && secret) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} 2fa add "${name}" "${secret}"`, 30000);
+    return ctx.reply(`🔐 ${result}`);
+  }
+
+  if (action === 'get' && name) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} 2fa get "${name}"`, 30000);
+    return ctx.reply(`🔐 ${result}`);
+  }
+
+  if (action === 'remove' && name) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} 2fa remove "${name}"`, 30000);
+    return ctx.reply(`🔐 ${result}`);
+  }
+
+  if (action === 'list') {
+    const result = await runCommand(`python3 ${SECURITY_CLI} 2fa list`, 30000);
+    return ctx.reply(`🔐 2FA Services\n\n${result}`);
+  }
+
+  ctx.reply(`🔐 2FA Authenticator
+
+Commands:
+/2fa add <name> <secret> - Add TOTP secret
+/2fa get <name> - Get current code
+/2fa remove <name> - Remove secret
+/2fa list - List all services`);
+});
+
+// /dns - Pi-hole control
+bot.command('dns', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/dns', '').trim().split(' ');
+  const action = args?.[0] || 'status';
+  const value = args?.[1];
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'enable') {
+    const result = await runCommand(`python3 ${SECURITY_CLI} dns enable`, 30000);
+    return ctx.reply(`🛡️ ${result}`);
+  }
+
+  if (action === 'disable') {
+    const duration = value || '300';
+    const result = await runCommand(`python3 ${SECURITY_CLI} dns disable ${duration}`, 30000);
+    return ctx.reply(`🛡️ ${result}`);
+  }
+
+  if (action === 'block' && value) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} dns block "${value}"`, 30000);
+    return ctx.reply(`🚫 ${result}`);
+  }
+
+  if (action === 'unblock' && value) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} dns unblock "${value}"`, 30000);
+    return ctx.reply(`✅ ${result}`);
+  }
+
+  if (action === 'whitelist' && value) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} dns whitelist "${value}"`, 30000);
+    return ctx.reply(`✅ ${result}`);
+  }
+
+  const result = await runCommand(`python3 ${SECURITY_CLI} dns status`, 30000);
+  ctx.reply(`🛡️ DNS/Pi-hole\n\n${result}\n\nCommands:\n/dns - Status\n/dns enable\n/dns disable [seconds]\n/dns block <domain>\n/dns unblock <domain>\n/dns whitelist <domain>`);
+});
+
+// /vpn - WireGuard control
+bot.command('vpn', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  const args = ctx.message?.text?.replace('/vpn', '').trim().split(' ');
+  const action = args?.[0] || 'status';
+  const value = args?.[1];
+
+  await ctx.replyWithChatAction('typing');
+
+  if (action === 'up') {
+    const iface = value || 'wg0';
+    const result = await runCommand(`python3 ${SECURITY_CLI} vpn up ${iface}`, 30000);
+    return ctx.reply(`🔒 ${result}`);
+  }
+
+  if (action === 'down') {
+    const iface = value || 'wg0';
+    const result = await runCommand(`python3 ${SECURITY_CLI} vpn down ${iface}`, 30000);
+    return ctx.reply(`🔓 ${result}`);
+  }
+
+  if (action === 'newpeer' && args?.[2] && args?.[3]) {
+    const result = await runCommand(`python3 ${SECURITY_CLI} vpn newpeer "${value}" "${args[2]}" "${args[3]}"`, 30000);
+    return ctx.reply(`🔑 ${result}`);
+  }
+
+  const result = await runCommand(`python3 ${SECURITY_CLI} vpn status`, 30000);
+  ctx.reply(`🔒 VPN (WireGuard)\n\n${result}\n\nCommands:\n/vpn - Status\n/vpn up [interface]\n/vpn down [interface]\n/vpn newpeer <name> <server_pubkey> <endpoint>`);
+});
+
+// /security - Security overview
+bot.command('security', async (ctx) => {
+  if (!isAdmin(ctx.from?.id || 0)) {
+    return ctx.reply('🔒 Admin only');
+  }
+
+  ctx.reply(`🛡️ Security Tools
+
+NETWORK:
+/scan - Scan network for devices
+/scan ports <ip> - Port scan
+/alerts - Check for unknown devices
+
+DEFENSE:
+/honeypot - Intrusion detection honeypot
+/wifi - WiFi security audit
+/dns - Pi-hole DNS control
+/vpn - WireGuard VPN
+
+CREDENTIALS:
+/breach - Check for leaked credentials
+/2fa - TOTP 2FA authenticator
+
+All commands require admin access.`);
 });
 
 // ==================== AI CHAT ====================
