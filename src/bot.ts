@@ -987,11 +987,85 @@ CREDENTIALS:
 All commands require admin access.`);
 });
 
-// ==================== AI CHAT ====================
+// ==================== AI CHAT WITH TOOLS ====================
+
+// Available tools for the AI
+const AI_TOOLS = {
+  scan_network: { cmd: `python3 ${SECURITY_CLI} scan`, desc: 'Scan network for devices' },
+  scan_ports: { cmd: (ip: string) => `python3 ${SECURITY_CLI} scan ports ${ip}`, desc: 'Scan ports on IP' },
+  check_password: { cmd: (pass: string) => `python3 ${SECURITY_CLI} breach password "${pass}"`, desc: 'Check if password was leaked' },
+  check_email: { cmd: (email: string) => `python3 ${SECURITY_CLI} breach email "${email}"`, desc: 'Check email for breaches' },
+  wifi_audit: { cmd: `python3 ${SECURITY_CLI} wifi audit`, desc: 'Audit WiFi security' },
+  wifi_scan: { cmd: `python3 ${SECURITY_CLI} wifi scan`, desc: 'Scan nearby WiFi networks' },
+  honeypot_status: { cmd: `python3 ${SECURITY_CLI} honeypot status`, desc: 'Show honeypot status' },
+  honeypot_start: { cmd: (svc: string) => `python3 ${SECURITY_CLI} honeypot start ${svc}`, desc: 'Start honeypot service' },
+  honeypot_logs: { cmd: `python3 ${SECURITY_CLI} honeypot logs 20`, desc: 'Show honeypot logs' },
+  totp_get: { cmd: (name: string) => `python3 ${SECURITY_CLI} 2fa get "${name}"`, desc: 'Get 2FA code' },
+  totp_list: { cmd: `python3 ${SECURITY_CLI} 2fa list`, desc: 'List 2FA services' },
+  system_status: { cmd: 'echo "CPU: $(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null | awk \'{print $1/1000}\'°C || echo N/A)" && free -m | grep Mem | awk \'{print "RAM: "$3"/"$2" MB"}\'', desc: 'System status' },
+  home_status: { cmd: `python3 ${TAPO_CLI} status`, desc: 'Smart home status' },
+  home_on: { cmd: (device: string) => `python3 ${TAPO_CLI} on ${device}`, desc: 'Turn on device' },
+  home_off: { cmd: (device: string) => `python3 ${TAPO_CLI} off ${device}`, desc: 'Turn off device' },
+  home_temp: { cmd: `python3 ${TAPO_CLI} temp`, desc: 'Temperature sensors' },
+  alerts: { cmd: `python3 ${SECURITY_CLI} alerts`, desc: 'Check for unknown devices' },
+};
+
+const SYSTEM_PROMPT = `You are Moltbot, an AI assistant running on a Raspberry Pi Zero 2W with security and smart home capabilities.
+
+You can execute tools by responding with a JSON block. When the user asks you to do something that requires a tool, respond with:
+\`\`\`json
+{"tool": "tool_name", "args": "optional_argument"}
+\`\`\`
+
+Available tools:
+- scan_network: Scan the local network for devices
+- scan_ports: Scan ports on an IP (args: IP address)
+- check_password: Check if a password was leaked in breaches (args: password)
+- check_email: Check if email appears in breaches (args: email)
+- wifi_audit: Audit current WiFi security
+- wifi_scan: Scan for nearby WiFi networks
+- honeypot_status: Show honeypot intrusion detection status
+- honeypot_start: Start a honeypot service (args: ssh, ftp, http, or telnet)
+- honeypot_logs: Show recent intrusion attempts
+- totp_get: Get current 2FA code (args: service name)
+- totp_list: List configured 2FA services
+- system_status: Show CPU temp and RAM usage
+- home_status: Show smart home device status
+- home_on: Turn on a smart device (args: device name)
+- home_off: Turn off a smart device (args: device name)
+- home_temp: Show temperature sensors
+- alerts: Check for unknown/suspicious devices on network
+
+Examples:
+- User: "scan my network" → {"tool": "scan_network"}
+- User: "is password123 safe?" → {"tool": "check_password", "args": "password123"}
+- User: "turn on the plug" → {"tool": "home_on", "args": "enchufe"}
+- User: "check ports on 192.168.2.1" → {"tool": "scan_ports", "args": "192.168.2.1"}
+
+If the user just wants to chat or asks something that doesn't need a tool, respond normally without JSON.
+Be concise. Answer in the same language the user writes in.`;
+
+async function executeAITool(toolName: string, args?: string): Promise<string | null> {
+  const tool = AI_TOOLS[toolName as keyof typeof AI_TOOLS];
+  if (!tool) return null;
+
+  let cmd: string;
+  if (typeof tool.cmd === 'function') {
+    if (!args) return `Error: ${toolName} requires an argument`;
+    cmd = tool.cmd(args);
+  } else {
+    cmd = tool.cmd;
+  }
+
+  console.log(`[AI Tool] Executing: ${toolName}${args ? ` (${args})` : ''}`);
+  return await runCommand(cmd, 60000);
+}
 
 bot.on('message:text', async (ctx) => {
   const userMessage = ctx.message.text;
   const userName = ctx.from?.first_name || 'User';
+  const userId = ctx.from?.id || 0;
+  const userIsAdmin = isAdmin(userId);
 
   console.log(`[${userName}]: ${userMessage}`);
 
@@ -1001,17 +1075,53 @@ bot.on('message:text', async (ctx) => {
     const response = await ai.chat.completions.create({
       model: 'deepseek-chat',
       messages: [
-        {
-          role: 'system',
-          content: 'You are Moltbot, a friendly assistant running on a Raspberry Pi Zero 2W. Be concise and helpful. Answer in the same language the user writes in.'
-        },
+        { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userMessage }
       ],
       max_tokens: 1024
     });
 
-    const reply = response.choices[0]?.message?.content || 'No response';
-    console.log('[Bot]:', reply.substring(0, 50) + '...');
+    let reply = response.choices[0]?.message?.content || 'No response';
+    console.log('[Bot]:', reply.substring(0, 100) + '...');
+
+    // Check if AI wants to execute a tool
+    const jsonMatch = reply.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+    if (jsonMatch) {
+      try {
+        const toolRequest = JSON.parse(jsonMatch[1]);
+        const toolName = toolRequest.tool;
+        const toolArgs = toolRequest.args;
+
+        // Security check - only admins can execute tools
+        if (!userIsAdmin) {
+          await ctx.reply('🔒 Tool execution requires admin access. Use /whoami to get your ID.');
+          return;
+        }
+
+        // Execute the tool
+        const toolResult = await executeAITool(toolName, toolArgs);
+
+        if (toolResult) {
+          // Get AI to summarize the result
+          const summaryResponse = await ai.chat.completions.create({
+            model: 'deepseek-chat',
+            messages: [
+              { role: 'system', content: 'Summarize this tool output concisely for the user. Keep the important data. Answer in the same language as the original request.' },
+              { role: 'user', content: `Original request: "${userMessage}"\n\nTool output:\n${toolResult}` }
+            ],
+            max_tokens: 1024
+          });
+
+          reply = summaryResponse.choices[0]?.message?.content || toolResult;
+        } else {
+          reply = `Unknown tool: ${toolName}`;
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        // If JSON parsing fails, just send the original reply
+        reply = reply.replace(/```json[\s\S]*?```/, '').trim() || reply;
+      }
+    }
 
     await ctx.reply(reply);
   } catch (error: any) {
