@@ -90,20 +90,15 @@ class NetworkMonitor:
         prefix = get_network_prefix()
         devices = []
 
-        # Use arp-scan if available, fallback to ping sweep
+        # Use arp-scan if available, fallback to arp table
         arp_result = run_cmd(f"sudo arp-scan -l 2>/dev/null || echo 'arp-scan not installed'", timeout=30)
 
         if 'not installed' in arp_result:
-            # Fallback: ping sweep + arp table
-            for i in range(1, 255):
-                ip = f"{prefix}.{i}"
-                subprocess.Popen(
-                    ['ping', '-c', '1', '-W', '1', ip],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-            time.sleep(3)
-            arp_result = run_cmd("arp -a")
+            # Fallback: just read arp table (already populated by normal network activity)
+            # Do a single broadcast ping to refresh arp table
+            run_cmd(f"ping -c 1 -b {prefix}.255 2>/dev/null || ping -c 1 {prefix}.1 2>/dev/null", timeout=5)
+            time.sleep(1)
+            arp_result = run_cmd("arp -a || cat /proc/net/arp")
 
         # Parse results
         for line in arp_result.split('\n'):
