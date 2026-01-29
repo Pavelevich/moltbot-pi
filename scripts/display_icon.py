@@ -4,7 +4,7 @@ Display icon on Waveshare 1.44" LCD HAT (ST7735S)
 For Raspberry Pi Zero 2W
 """
 
-import ST7735
+import st7735
 from PIL import Image
 import sys
 import os
@@ -13,7 +13,7 @@ import os
 # RST = 27, DC = 25, BL = 24, CS = 8 (SPI CE0)
 
 # Create display instance
-disp = ST7735.ST7735(
+disp = st7735.ST7735(
     port=0,
     cs=0,  # CE0
     dc=25,
@@ -22,24 +22,38 @@ disp = ST7735.ST7735(
     width=128,
     height=128,
     rotation=0,
-    invert=False
+    invert=False,
+    spi_speed_hz=4000000,
+    offset_left=2,
+    offset_top=1
 )
+
+# Initialize display
+disp.begin()
+
+def clear_display():
+    """Clear display with black"""
+    img = Image.new('RGB', (128, 128), (0, 0, 0))
+    disp.display(img)
 
 def show_image(image_path):
     """Display an image on the LCD"""
-    
+
     if not os.path.exists(image_path):
         print(f'Error: {image_path} not found')
         sys.exit(1)
-    
-    # Load and resize image
+
+    # Clear first
+    clear_display()
+
+    # Load and resize image to fill entire display
     img = Image.open(image_path)
     img = img.resize((128, 128), Image.LANCZOS)
-    
+
     # Convert to RGB if needed
     if img.mode != 'RGB':
         img = img.convert('RGB')
-    
+
     # Display
     disp.display(img)
     print(f'Displaying: {image_path}')
