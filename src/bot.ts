@@ -206,19 +206,30 @@ function parseTime(text: string): number | null {
 // /start
 bot.command('start', (ctx) => {
   const isUserAdmin = isAdmin(ctx.from?.id || 0);
-  ctx.reply(`🤖 Moltbot Pi - Raspberry Pi AI Bot
+  const userName = ctx.from?.first_name || 'Human';
 
-Send me any message to chat with AI.
+  ctx.reply(`⚡ MOLTBOT PI ⚡
+━━━━━━━━━━━━━━━━━━━━━
 
-📋 Commands:
-/help - All commands
-/status - System status
-/vault - File storage
-/remind - Set reminders
-${TAPO_EMAIL ? '/home - Smart home control' : ''}
-${isUserAdmin ? '\n🔐 Admin commands available' : ''}
+Welcome, ${userName}!
 
-Built for low-end hardware. 85MB RAM.`);
+I'm your AI-powered Raspberry Pi assistant with cybersecurity superpowers.
+
+🧠 AI Chat - Ask me anything
+🔍 Network Scanner - Find devices & ports
+🍯 Honeypot - Catch intruders
+🔐 Password Checker - Breach detection
+🏠 Smart Home - Control your devices
+📁 Encrypted Vault - Secure file storage
+⏰ Reminders - Never forget
+
+${isUserAdmin ? '🛡️ ADMIN MODE ACTIVE' : ''}
+${TAPO_EMAIL ? '🏠 Smart Home: Connected' : ''}
+
+Type anything to chat, or /help for commands.
+
+🤖 Powered by DeepSeek AI
+⚡ Running on Raspberry Pi Zero 2W`);
 });
 
 // /help
